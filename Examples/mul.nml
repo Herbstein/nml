@@ -1,6 +1,7 @@
-var lhs 2
-var rhs 3
-var acc 0
+var lhs 10
+var rhs 5
+
+var acc
 
 label loop
 
@@ -8,4 +9,5 @@ add acc lhs acc
 sub rhs 1 rhs
 
 jnz rhs loop
+
 print acc

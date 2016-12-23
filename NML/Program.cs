@@ -8,7 +8,7 @@
         private static int res;
         private static readonly int[] gx = new int[10];
         private static readonly Dictionary<string, int> jumpMap = new Dictionary<string, int>();
-        private static Dictionary<string, int> memory = new Dictionary<string, int>();
+        private static readonly Dictionary<string, int> memory = new Dictionary<string, int>();
 
         private static void Main(string[] args) {
 #if !DEBUG
@@ -22,16 +22,8 @@
             }
             var sourceLines = File.ReadAllLines(sourceFile);
 #else
-            var sourceLines = new[] { "var lhs 2",
-"var rhs 3",
-"var acc 0",
-"label loop",
-"add acc lhs acc",
-"sub rhs 1 rhs",
-"jnz rhs loop",
-"print acc" };
+            var sourceLines = File.ReadAllLines("input.nml");
 #endif
-
             for (var i = 0; i < sourceLines.Length; i++) {
                 var tokens = sourceLines[i].Split(' ').ToList();
 
@@ -64,7 +56,7 @@
                         Console.WriteLine(ResolveValue(tokens[1]));
                         break;
                     }
-                    case "mov": {
+                    case "set": {
                         var dst = tokens[1];
 
                         if (dst == "RES") {
@@ -74,16 +66,23 @@
                         var src = tokens[2];
                         var val = ResolveValue(src);
                         SetRegister(dst, val);
-                        SetRegister(src, 0);
                         break;
                     }
                     case "var": {
-                            memory[tokens[1]] = ResolveValue(tokens[2]);
+                        if (!memory.ContainsKey(tokens[1])) {
+                            if (tokens.Count == 3) {
+                                memory[tokens[1]] = ResolveValue(tokens[2]);
+                            } else {
+                                memory[tokens[1]] = 0;
+                            }
+                        } else {
+                            throw new Exception($"var '{tokens[1]}' already exists in memory.");
+                        }
                         break;
                     }
                     case "label": {
-                            jumpMap[tokens[1]] = i;
-                            break;
+                        jumpMap[tokens[1]] = i;
+                        break;
                     }
                     case "jmp": {
                         if (jumpMap.ContainsKey(tokens[1])) {
@@ -94,22 +93,28 @@
                         break;
                     }
                     case "jez": {
-                        if ((ResolveValue(tokens[1]) == 0) && jumpMap.ContainsKey(tokens[2])) {
+                        if (ResolveValue(tokens[1]) == 0 && jumpMap.ContainsKey(tokens[2])) {
                             i = jumpMap[tokens[2]];
                         }
                         break;
                     }
                     case "jnz": {
-                        if ((ResolveValue(tokens[1]) != 0) && jumpMap.ContainsKey(tokens[2])) {
+                        if (ResolveValue(tokens[1]) != 0 && jumpMap.ContainsKey(tokens[2])) {
                             i = jumpMap[tokens[2]];
                         }
                         break;
                     }
                     case "jeq": {
-                        if ((ResolveValue(tokens[1]) == ResolveValue(tokens[2])) && jumpMap.ContainsKey(tokens[3])) {
+                        if (ResolveValue(tokens[1]) == ResolveValue(tokens[2]) && jumpMap.ContainsKey(tokens[3])) {
                             i = jumpMap[tokens[3]];
                         }
                         break;
+                    }
+                    default: {
+                        if (tokens[0] == "") {
+                            continue;
+                        }
+                        throw new Exception("Unkonw command: '" + tokens[0] + "'");
                     }
                 }
             }
@@ -121,7 +126,7 @@
             }
 
             int x;
-            if ((token.Length == 2) && (token[0] == 'G') && int.TryParse(token[1].ToString(), out x)) {
+            if (token.Length == 2 && token[0] == 'G' && int.TryParse(token[1].ToString(), out x)) {
                 return gx[x];
             }
 
@@ -145,7 +150,7 @@
                 memory[name] = value;
             }
 
-            if ((name.Length == 2) && (name[0] == 'G')) {
+            if (name.Length == 2 && name[0] == 'G') {
                 int x;
                 if (int.TryParse(name[1].ToString(), out x)) {
                     gx[x] = value;

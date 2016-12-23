@@ -1,10 +1,10 @@
 var base 2
-var exp 2
-
-var lhs 2
-var rhs 3
-var acc
+var exp 1
+var mulAcc
+var expAcc
 
 label expLoop
+
+
 
 label mulLoop
